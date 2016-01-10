@@ -6,6 +6,9 @@ class RCC(MMPeripheral):
               (T.uint32_t,  'CFGR'),
               (T.uint32_t,  'CIR'),
               (T.uint32_t,  'APB2RSTR'),
+              (T.uint32_t,  'APB1RSTR'),
+              (T.uint32_t,  'AHBENR'),
+              (T.uint32_t,  'APB2ENR'),
               (T.uint32_t,  'APB1ENR'),
               (T.uint32_t,  'BDCR'),
               (T.uint32_t,  'CSR'),
@@ -428,3 +431,33 @@ class USB(MMPeripheral):
                  'PDEN': 2,
                  'DCDEN': 1,
                  'BCDEN': 0}
+
+
+class STM32F0(object):
+
+    PERIPHERALS_BASE = 0x40000000
+
+    APB_BUS_BASE = PERIPHERALS_BASE
+    AHB1_BUS_BASE = PERIPHERALS_BASE + 0x00020000
+    AHB2_BUS_BASE = PERIPHERALS_BASE + 0x08000000
+
+    def __init__(self, device_memory):
+        self.GPIO = {'A': GPIO(self.AHB2_BUS_BASE + 0x00000000, device_memory),
+                     'B': GPIO(self.AHB2_BUS_BASE + 0x00000400, device_memory),
+                     'C': GPIO(self.AHB2_BUS_BASE + 0x00000800, device_memory),
+                     'D': GPIO(self.AHB2_BUS_BASE + 0x00000C00, device_memory),
+                     'E': GPIO(self.AHB2_BUS_BASE + 0x00001000, device_memory),
+                     'F': GPIO(self.AHB2_BUS_BASE + 0x00001400, device_memory)}
+        self.RCC = RCC(self.AHB1_BUS_BASE + 0x00001000, device_memory)
+        self.USART = {1: USART(self.APB_BUS_BASE + 0x00013800, device_memory),
+                      8: USART(self.APB_BUS_BASE + 0x00011C00, device_memory),
+                      7: USART(self.APB_BUS_BASE + 0x00011800, device_memory),
+                      6: USART(self.APB_BUS_BASE + 0x00011400, device_memory),
+                      5: USART(self.APB_BUS_BASE + 0x00005000, device_memory),
+                      4: USART(self.APB_BUS_BASE + 0x00004C00, device_memory),
+                      3: USART(self.APB_BUS_BASE + 0x00004800, device_memory),
+                      2: USART(self.APB_BUS_BASE + 0x00004000, device_memory)}
+        self.ADC = ADC(self.APB_BUS_BASE + 0x00012400, device_memory)
+        self.DAC = DAC(self.APB_BUS_BASE + 0x00007800, device_memory)
+        self.USB = USB(self.APB_BUS_BASE + 0x00005C00, device_memory)
+        self.SPI = {2: SPI(self.APB_BUS_BASE + 0x00003800, device_memory)}
