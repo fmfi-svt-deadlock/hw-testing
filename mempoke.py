@@ -1,4 +1,4 @@
-# import gdb
+import gdb
 import struct
 
 
