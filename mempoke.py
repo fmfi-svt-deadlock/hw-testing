@@ -17,11 +17,9 @@ class T(object):
 
 
 class DeviceMemory:
+
     def __init__(self):
         self.inferior = gdb.selected_inferior()
-
-    def __del__(self):
-        del self.inferior
 
     def read(self, t, address):
         return struct.unpack(t[T.FORMAT_CHAR], self.inferior.read_memory(address, 4))[0]
