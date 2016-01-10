@@ -1,4 +1,4 @@
-import gdb
+# import gdb
 import struct
 
 
@@ -24,7 +24,7 @@ class T(object):
     uint8_t = ('B', 1)
     uint16_t = ('H', 2)
     uint32_t = ('I', 4)
-    uint36_t = ('Q', 8)
+    uint64_t = ('Q', 8)
     int8_t = ('b', 1)
     int16_t = ('h', 2)
     int32_t = ('i', 4)
@@ -44,9 +44,8 @@ class MMPeripheral(object):
         self.address = address
         offset = 0
         for t, name in self.fields:
-            if name is None:
-                continue
-            self.compiled_fields[name] = (t, offset)
+            if name is not None:
+                self.compiled_fields[name] = (t, offset)
             offset += t[LENGTH]
 
     def __getattr__(self, name):
