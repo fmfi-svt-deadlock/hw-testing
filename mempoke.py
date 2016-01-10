@@ -49,16 +49,15 @@ class MMPeripheral(object):
             offset += t[LENGTH]
 
     def __getattr__(self, name):
-        print 'getattr', name
         if name in self.compiled_fields:
-            return self.device.read(self.compiled_fields[name][TYPE],
-                                    self.address + self.compiled_fields[name][OFFSET])
+            return self.device_memory.read(self.compiled_fields[name][TYPE],
+                                           self.address + self.compiled_fields[name][OFFSET])
         else:
             raise ValueError('This peripheral does not contain register ' + name)
 
     def __setattr__(self, name, value):
         if name in self.compiled_fields:
-            self.device.write(self.compiled_fields[name][TYPE],
-                              self.address + self.compiled_fields[name][OFFSET], value)
+            self.device_memory.write(self.compiled_fields[name][TYPE],
+                                     self.address + self.compiled_fields[name][OFFSET], value)
         else:
             super(MMPeripheral, self).__setattr__(name, value)
