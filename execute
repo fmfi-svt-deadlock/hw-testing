@@ -18,8 +18,8 @@ if [[ ! $PYTHON_VERSION == Python\ 2.7* ]]; then
     exit 2
 fi
 
-# GDB, when launching Python, ommits the current directory from sys.path, as well
-# as anything which may be added there as a result of using virtualenv.
+# Python launched from GDB won't allow importing modules from the current working dir
+# and ignores anything which may have been added to the `sys.path` as a result of using virtualenv.
 # This is a (ugly, I am so sorry...) hack which puts those two things back
 # to sys.path
 VENV_APPEND=""
