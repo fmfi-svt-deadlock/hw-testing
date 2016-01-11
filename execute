@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo 'Usage: ./execute file_with_tests.py'
+    exit 1
+fi
+
+PYTHON_HACK="python
+import sys
+import os
+sys.path.append(os.getcwd())"
+
+REMOTE_DEBUG="target extended :4242"
+
+arm-none-eabi-gdb -batch -ex "$REMOTE_DEBUG" -ex "$PYTHON_HACK" -x $1
