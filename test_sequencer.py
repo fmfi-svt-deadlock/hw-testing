@@ -22,8 +22,8 @@ def run(tests):
     ok = []
     fail = []
     for number, test in enumerate(tests):
-        print '\t-> [{num}/{total}] {name} ({doc})'.format(num=number, len=len(tests),
-                                                           name=test.__name__, doc=test.__doc__).
+        print '\t-> [{num}/{total}] {name} ({doc})'.format(num=number, total=len(tests),
+                                                           name=test.__name__, doc=test.__doc__)
         error = test()
         if error is None:
             ok.append((number, test))

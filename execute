@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo 'Usage: ./execute file_with_tests.py [gdb_server_port]'
+    exit 1
+fi
+
+GDB_PORT='4242'
+
+if [ ! -z "$2" ]; then
+    GDB_PORT=$2
+fi
+
+PYTHON_VERSION=$(python2 --version 2>&1)
+
+if [[ ! $PYTHON_VERSION == Python\ 2.7* ]]; then
+    echo "Python 2.7 is required, your version is $PYTHON_VERSION"
+    exit 2
+fi
+
+# Python launched from GDB won't allow importing modules from the current working dir
+# and ignores anything which may have been added to the `sys.path` as a result of using virtualenv.
+# This is a (ugly, I am so sorry...) hack which puts those two things back
+# to sys.path
+VENV_APPEND=""
+if [ ! -z "$VIRTUAL_ENV" ]; then
+    VENV_APPEND="sys.path.append('$VIRTUAL_ENV/lib/python2.7/site-packages')"
+fi
+
+PYTHON_HACK="python
+import sys
+import os
+sys.path.append(os.getcwd())
+$VENV_APPEND"
+
+REMOTE_DEBUG="target extended :$GDB_PORT"
+
+arm-none-eabi-gdb -batch -ex "$REMOTE_DEBUG" -ex "$PYTHON_HACK" -x $1
