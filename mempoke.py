@@ -18,14 +18,17 @@ class T(object):
 
 class DeviceMemory:
 
+    ENDIANITY = '<'
+
     def __init__(self):
         self.inferior = gdb.selected_inferior()
 
     def read(self, t, address):
-        return struct.unpack(t[T.FORMAT_CHAR], self.inferior.read_memory(address, 4))[0]
+        return struct.unpack(DeviceMemory.ENDIANITY + t[T.FORMAT_CHAR],
+                             self.inferior.read_memory(address, t[T.LENGTH]))[0]
 
-    def write(self, type, address, value):
-        value_bytes = struct.pack(t[T.FORMAT_CHAR], value)
+    def write(self, t, address, value):
+        value_bytes = struct.pack(DeviceMemory.ENDIANITY + t[T.FORMAT_CHAR], value)
         self.inferior.write_memory(address, value_bytes)
 
 
