@@ -29,6 +29,14 @@ class RCC(MMPeripheral):
                    'SRAMEN': 2,
                    'DMAEN': 0}
 
+    AHBRSTR_bits = {'TSCRST': 24,
+                    'IOPFRST': 22,
+                    'IOPERST': 21,
+                    'IOPDRST': 20,
+                    'IOPCRST': 19,
+                    'IOPBRST': 18,
+                    'IOPARST': 17}
+
 
 class GPIO(MMPeripheral):
     fields = [(T.uint32_t,  'MODER'),
