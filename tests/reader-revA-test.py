@@ -47,5 +47,34 @@ def led2():
     reset_peripherals()
     return error
 
-tests = [led1, led2]
+
+def test_reader():
+    """Tests communication with the RFID module"""
+    # Enable port A GPIO for SPI usage
+    dev.RCC.AHBENR |= (1 << dev.RCC.AHBRSTR_bits["IOPAEN"])
+    # Set pins used by SPI1 to 'Alternate' mode
+    for pin in [5, 6, 7, 1]:
+        dev.GPIO['A'].MODER |= (1 << dev.GPIO['A'].MODE_bits["ALT"] << pin*2)
+
+    # Use software slave management
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SSM"])
+    # Slowest comm speed (safest option) (0x111 to BR[2:0])
+    dev.SPI[1].CR1 |= (0x111 << 3)
+    # We are the master
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["MSTR"])
+    # Clock phase and clock polarity is left on default
+
+    # 8-bit transfer data size
+    dev.SPI[1].CR2 |= (0x0111 << 8)
+    # Enable control of Slave Select pin
+    dev.SPI[1].CR2 |= (1 << dev.SPI[1].CR2_bits["SSOE"])
+    # Generate RX-Not-empty event when 8 bits were received
+    dev.SPI[1].CR2 |= (1 << dev.SPI[1].CR2_bits["FRXTH"])
+
+    # Enable the SPI
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SPE"])
+
+
+tests = [test_reader]
+# tests = [test_reader, led1, led2]
 run(tests)
