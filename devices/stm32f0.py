@@ -50,8 +50,8 @@ class GPIO(MMPeripheral):
               (T.uint16_t,  None),
               (T.uint32_t,  'BSRR'),
               (T.uint32_t,  'LCKR'),
-              (T.uint32_t,  'AFR0'),
-              (T.uint32_t,  'AFR1'),
+              (T.uint32_t,  'AFRL'),
+              (T.uint32_t,  'AFRH'),
               (T.uint16_t,  'BRR'),
               (T.uint16_t,  None)]
 
