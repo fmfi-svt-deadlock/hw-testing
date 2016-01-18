@@ -1,0 +1,64 @@
+#!/bin/sh
+
+if [ -z "$1" ] || [ -z "$2" ] || [ ! -f "devices/$1.py" ]; then
+    echo 'Opens interactive Python console inside gdb with slave'
+    echo 'device already set-up.'
+    echo 'Usage: ./interactive device_file device_object [gdb_server_port]'
+    echo
+    echo 'device_file may be:'
+    for device in `ls devices/`; do
+        if [[ ! $device == __* ]] && [[ $device == *.py ]]; then
+            echo -e "\t${device%.*}"
+        fi
+    done
+    echo
+    echo 'Example: ./interactive stm32f0 STM32F0'
+    exit 1
+fi
+
+GDB_PORT='4242'
+
+if [ ! -z "$3" ]; then
+    GDB_PORT=$3
+fi
+
+PYTHON_VERSION=$(python2 --version 2>&1)
+
+if [[ ! $PYTHON_VERSION == Python\ 2.7* ]]; then
+    echo "Python 2.7 is required, your version is $PYTHON_VERSION"
+    exit 2
+fi
+
+# Python launched from GDB won't allow importing modules from the current working dir
+# and ignores anything which may have been added to the `sys.path` as a result of using virtualenv.
+# This is a (ugly, I am so sorry...) hack which puts those two things back
+# to sys.path
+VENV_APPEND=""
+if [ ! -z "$VIRTUAL_ENV" ]; then
+    VENV_APPEND="sys.path.append('$VIRTUAL_ENV/lib/python2.7/site-packages')"
+fi
+
+PYTHON_HACK="python
+import sys
+import os
+sys.path.append(os.getcwd())
+$VENV_APPEND"
+
+# This part sets up device object as a wrapper around the real device.
+PYTHON_SETUP="python
+import mempoke
+from devices.$1 import $2
+dev = $2(mempoke.DeviceMemory())"
+
+# And this opens the interactive console.
+PYTHON_INTERACTIVE="python
+import code
+vars = globals()
+vars.update(locals())
+shell = code.InteractiveConsole(vars)
+print 'Device is available as variable \'dev\'.'
+shell.interact()"
+
+REMOTE_DEBUG="target extended :$GDB_PORT"
+
+arm-none-eabi-gdb -batch -ex "$REMOTE_DEBUG" -ex "$PYTHON_HACK" -ex "$PYTHON_SETUP" -ex "$PYTHON_INTERACTIVE"
