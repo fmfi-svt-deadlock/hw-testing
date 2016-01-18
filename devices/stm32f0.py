@@ -464,7 +464,7 @@ class STM32F0(object):
                       5: USART(self.APB_BUS_BASE + 0x00005000, device_memory),
                       4: USART(self.APB_BUS_BASE + 0x00004C00, device_memory),
                       3: USART(self.APB_BUS_BASE + 0x00004800, device_memory),
-                      2: USART(self.APB_BUS_BASE + 0x00004000, device_memory)}
+                      2: USART(self.APB_BUS_BASE + 0x00004400, device_memory)}
         self.ADC = ADC(self.APB_BUS_BASE + 0x00012400, device_memory)
         self.DAC = DAC(self.APB_BUS_BASE + 0x00007800, device_memory)
         self.USB = USB(self.APB_BUS_BASE + 0x00005C00, device_memory)
