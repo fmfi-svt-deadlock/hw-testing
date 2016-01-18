@@ -75,6 +75,20 @@ def test_reader():
     dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SPE"])
 
 
-tests = [test_reader]
+def usart_transmit():
+    """Tests functionality of the RS232 interface direction reader -> controller."""
+    pass
+
+
+def usart_receive():
+    """Tests functionality of the RS232 interface direction reader <- controller."""
+    # Set-up GPIO Rx pin (GPIOA 15?) as alternate
+    # Set GPIOA 15 AF-1
+    # Enable clock to USART 2
+    # Set baud rate: clock in debug config is 8MHz => 833
+    # Enable receiver and enable USART 2
+    # Check RDR
+
+tests = [usart_transmit]
 # tests = [test_reader, led1, led2]
 run(tests)
