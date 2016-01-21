@@ -50,15 +50,6 @@ import mempoke
 from devices.$1 import $2
 dev = $2(mempoke.DeviceMemory())"
 
-# And this opens the interactive console.
-PYTHON_INTERACTIVE="python
-import code
-vars = globals()
-vars.update(locals())
-shell = code.InteractiveConsole(vars)
-print 'Device is available as variable \'dev\'.'
-shell.interact()"
-
 REMOTE_DEBUG="target extended :$GDB_PORT"
 
-arm-none-eabi-gdb -batch -ex "$REMOTE_DEBUG" -ex "$PYTHON_HACK" -ex "$PYTHON_SETUP" -ex "$PYTHON_INTERACTIVE"
+arm-none-eabi-gdb -batch -ex "$REMOTE_DEBUG" -ex "$PYTHON_HACK" -ex "$PYTHON_SETUP" -x interactive_utils.py
