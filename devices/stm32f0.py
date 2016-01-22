@@ -37,6 +37,46 @@ class RCC(MMPeripheral):
                     'IOPBRST': 18,
                     'IOPARST': 17}
 
+    APB1ENR_bits = {'CECEN': 30,
+                    'DACEN': 29,
+                    'PWREN': 28,
+                    'CRSEN': 27,
+                    'CANEN': 25,
+                    'USBEN': 23,
+                    'I2C2EN': 22,
+                    'I2C1EN': 21,
+                    'USART5EN': 20,
+                    'USART4EN': 19,
+                    'USART3EN': 18,
+                    'USART2EN': 17,
+                    'SPI2EN': 14,
+                    'WWDGEN': 11,
+                    'TIM14EN': 8,
+                    'TIM7EN': 5,
+                    'TIM6EN': 4,
+                    'TIM3EN': 1,
+                    'TIM2EN': 0}
+
+    APB1RSTR_bits = {'CECRST': 30,
+                     'DACRST': 29,
+                     'PWRRST': 28,
+                     'CRSRST': 27,
+                     'CANRST': 25,
+                     'USBRST': 23,
+                     'I2C2RST': 22,
+                     'I2C1RST': 21,
+                     'USART5RST': 20,
+                     'USART4RST': 19,
+                     'USART3RST': 18,
+                     'USART2RST': 17,
+                     'SPI2RST': 14,
+                     'WWDGRST': 11,
+                     'TIM14RST': 8,
+                     'TIM7RST': 5,
+                     'TIM6RST': 4,
+                     'TIM3RST': 1,
+                     'TIM2RST': 0}
+
 
 class GPIO(MMPeripheral):
     fields = [(T.uint32_t,  'MODER'),
