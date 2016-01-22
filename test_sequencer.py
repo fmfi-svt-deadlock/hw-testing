@@ -50,3 +50,12 @@ def ask(question):
         if answer.strip().upper() in ['Y', 'N']:
             break
     return answer.strip().upper() == 'Y'
+
+
+def askForString(question):
+    print '\t\t-? {0}:'.format(question),
+    return raw_input()
+
+
+def say(something):
+    print '\t\t- {0}'.format(something)
