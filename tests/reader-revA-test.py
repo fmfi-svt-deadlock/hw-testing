@@ -143,7 +143,7 @@ def usart_receive():
 
     string = "DEADLOCK"
 
-    for i, letter in enumerate(string):
+    for letter_num, letter in enumerate(string):
         # Transmit it
         port.write(letter)
         port.flush()
@@ -162,7 +162,7 @@ def usart_receive():
                 return "USART received something else than what we sent"
         else:
             reset_peripherals()
-            return "USART has not received letter " + str(i) + " (" + letter + ")"
+            return "USART has not received letter " + str(letter_num) + " (" + letter + ")"
 
     # All done
     reset_peripherals()
