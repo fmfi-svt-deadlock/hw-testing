@@ -8,7 +8,7 @@ and the device is deployed
 
 import mempoke
 import serial
-from test_sequencer import run, ask, askForString, say
+from test_sequencer import run, ask, request_info, say
 from devices.stm32f0 import STM32F0
 
 
@@ -44,7 +44,7 @@ def reset_peripherals():
     dev.RCC.APB2RSTR &= ~apb2rst
 
 
-def led1():
+def test_led1():
     """Tests green LED1"""
     reset_peripherals()
 
@@ -56,7 +56,7 @@ def led1():
     return error
 
 
-def led2():
+def test_led2():
     """Tests green LED2"""
     reset_peripherals()
 
@@ -69,7 +69,11 @@ def led2():
 
 
 def test_reader():
-    """Tests communication with the RFID module"""
+    """Tests communication with the RFID (MFRC522) module.
+
+    This test verifies the presence and functionality of the MFRC522 module, as well as integrity
+    of all SPI and RST signal paths.
+    """
     reset_peripherals()
 
     RST_PIN = 3
@@ -126,17 +130,23 @@ def test_reader():
 
 
 def usart_transmit():
-    """Tests functionality of the RS232 interface direction reader -> controller."""
+    """Tests USART Tx."""
     # This is undoable in the current board revision. USART 2 Tx shares pin with SWCLK, we would
     # loose the debug link
     pass
 
 
 def usart_receive():
-    """Tests functionality of the RS232 interface direction reader <- controller."""
+    """Tests USART Rx.
+
+    This test verifies whether Controller is able to send data to the Reader. It assesses functionality of
+    the IC4 and J1, as well as integrity of USART Rx signal path.
+    If this test succeeds and there is no contact problem on the Tx path it is reasonable to assume that USART Tx
+    will be working as well, as it cannot be tested directly.
+    """
     reset_peripherals()
 
-    port_name = askForString("Serial port name to use")
+    port_name = request_info("Serial port name to use")
     port = serial.Serial(port_name, 9600)
     say("pySerial is using port " + port.name)
 
@@ -164,13 +174,14 @@ def usart_receive():
     # Empty the Rx buffer (limit: 30 times)
     for i in range(0, 30):
         if dev.USART[2].ISR & dev.USART[2].ISR_bits["RXNE"]:
+            # Discard data from the RDR by reading it
             dev.USART[2].RDR
         else:
             break
 
     if dev.USART[2].ISR & dev.USART[2].ISR_bits["RXNE"]:
         reset_peripherals()
-        return "USART is receiving something, we are not transmitting. Noise?"
+        return "USART is receiving something, but we are not transmitting. Noise?"
 
     # Clear possible leftover error flags
     dev.USART[2].ICR |= (1 << dev.USART[2].ICR_bits["PECF"]) | (1 << dev.USART[2].ICR_bits["FECF"])
@@ -201,10 +212,10 @@ def usart_receive():
                 return "USART received something else than what we sent"
         else:
             reset_peripherals()
-            return "USART has not received letter " + str(letter_num) + " (" + letter + ")"
+            return "USART has not received letter {number} ({letter})".format(number=letter_num, letter=letter)
 
     # All done
     reset_peripherals()
 
-tests = [led1, led2, test_reader, usart_receive]
+tests = [test_led1, test_led2, test_reader, usart_receive]
 run(tests)
