@@ -23,14 +23,25 @@ def turn_on_led(port, pin):
 
 
 def reset_peripherals():
-    """Resets used peripherals, teardown function"""
-    for i in ['A', 'B', 'C', 'D', 'E', 'F']:
-        dev.RCC.AHBRSTR |= (1 << dev.RCC.AHBRSTR_bits["IOP" + i + "RST"])
-        dev.RCC.AHBRSTR &= ~(1 << dev.RCC.AHBRSTR_bits["IOP" + i + "RST"])
+    """Resets *used* peripherals, teardown function."""
 
+    ahbrst = 0
+    for i in ['A', 'B', 'C', 'D', 'E', 'F']:
+        ahbrst |= (1 << dev.RCC.AHBRSTR_bits["IOP" + i + "RST"])
+    dev.RCC.AHBRSTR |= ahbrst
+    dev.RCC.AHBRSTR &= ~ahbrst
+
+    apb1rst = 0
     for bit in dev.RCC.APB1RSTR_bits.values():
-        dev.RCC.APB1RSTR |= (1 << bit)
-        dev.RCC.APB1RSTR &= ~(1 << bit)
+        apb1rst |= (1 << bit)
+    dev.RCC.APB1RSTR |= apb1rst
+    dev.RCC.APB1RSTR &= ~apb1rst
+
+    apb2rst = 0
+    for bit in dev.RCC.APB2RSTR_bits.values():
+        apb2rst |= (1 << bit)
+    dev.RCC.APB2RSTR |= apb2rst
+    dev.RCC.APB2RSTR &= ~apb2rst
 
 
 def led1():
@@ -61,22 +72,33 @@ def test_reader():
     """Tests communication with the RFID module"""
     reset_peripherals()
 
+    RST_PIN = 3
+    SS_PIN = 1
+
     # Enable port A GPIO for SPI usage
-    dev.RCC.AHBENR |= (1 << dev.RCC.AHBRSTR_bits["IOPAEN"])
+    dev.RCC.AHBENR |= (1 << dev.RCC.AHBENR_bits["IOPAEN"])
     # Set pins used by SPI1 to 'Alternate' mode
-    for pin in [5, 6, 7, 1]:
-        dev.GPIO['A'].MODER |= (1 << dev.GPIO['A'].MODE_bits["ALT"] << pin*2)
+    moder_flags = 0
+    for pin in [5, 6, 7]:
+        moder_flags |= (dev.GPIO['A'].MODE_bits["ALT"] << pin*2)
+    # Slave select is plain GPIO pin, as is RST
+    moder_flags |= (dev.GPIO['A'].MODE_bits["OUTPUT"] << SS_PIN*2) | (dev.GPIO['A'].MODE_bits["OUTPUT"] << RST_PIN*2)
+    dev.GPIO['A'].MODER |= moder_flags
+    # Correct alternate function (0) are already set up
+
+    # Enable the SPI 1
+    dev.RCC.APB2ENR |= (1 << dev.RCC.APB2ENR_bits["SPI1EN"])
 
     # Use software slave management
     dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SSM"])
-    # Slowest comm speed (safest option) (0x111 to BR[2:0])
-    dev.SPI[1].CR1 |= (0x111 << 3)
+    # Slowest comm speed (safest option) (0b111 to BR[2:0])
+    dev.SPI[1].CR1 |= (0b111 << 3)
     # We are the master
     dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["MSTR"])
-    # Clock phase and clock polarity is left on default
+    # Clock phase and clock polarity is left default. Byte is sent MSB-first (also default)
 
     # 8-bit transfer data size
-    dev.SPI[1].CR2 |= (0x0111 << 8)
+    dev.SPI[1].CR2 |= (0b0111 << 8)
     # Enable control of Slave Select pin
     dev.SPI[1].CR2 |= (1 << dev.SPI[1].CR2_bits["SSOE"])
     # Generate RX-Not-empty event when 8 bits were received
@@ -84,6 +106,23 @@ def test_reader():
 
     # Enable the SPI
     dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SPE"])
+
+    # Power-up the reader and *un*select slave
+    dev.GPIO['A'].ODR |= (1 << RST_PIN) | (1 << SS_PIN)
+
+    # Transmit 0x82 0x00, which means "Read register 01h". That is a CommanReg of MFRC522. It's reset value is 0x20,
+    # we will expect that as an answer
+    response = []
+    dev.GPIO['A'].ODR &= ~(1 << SS_PIN)
+    for b in [0x82, 0x00]:
+        dev.SPI[1].DR = b
+        response.append(dev.SPI[1].DR)
+    dev.GPIO['A'].ODR |= (1 << SS_PIN)
+
+    reset_peripherals()
+
+    if response[1] != 0x20:
+        return "Error communicating with the MFRC522 module, or the module is not behaving properly!"
 
 
 def usart_transmit():
@@ -167,6 +206,5 @@ def usart_receive():
     # All done
     reset_peripherals()
 
-tests = [usart_receive]
-# tests = [test_reader, led1, led2]
+tests = [led1, led2, test_reader, usart_receive]
 run(tests)

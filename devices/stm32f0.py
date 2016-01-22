@@ -77,6 +77,32 @@ class RCC(MMPeripheral):
                      'TIM3RST': 1,
                      'TIM2RST': 0}
 
+    APB2ENR_bits = {'DBGMCUEN': 22,
+                    'TIM17EN': 18,
+                    'TIM16EN': 17,
+                    'TIM15EN': 16,
+                    'USART1EN': 14,
+                    'SPI1EN': 12,
+                    'TIM1EN': 11,
+                    'ADCEN': 9,
+                    'USART8EN': 7,
+                    'USART7EN': 6,
+                    'USART6EN': 5,
+                    'SYSCFGCOMPEN': 0}
+    
+    APB2RSTR_bits = {'DBGMCURST': 22,
+                     'TIM17RST': 18,
+                     'TIM16RST': 17,
+                     'TIM15RST': 16,
+                     'USART1RST': 14,
+                     'SPI1RST': 12,
+                     'TIM1RST': 11,
+                     'ADCRST': 9,
+                     'USART8RST': 7,
+                     'USART7RST': 6,
+                     'USART6RST': 5,
+                     'SYSCFGRST': 0}
+
 
 class GPIO(MMPeripheral):
     fields = [(T.uint32_t,  'MODER'),
@@ -333,7 +359,12 @@ class SPI(MMPeripheral):
     fields = [(T.uint32_t,  'CR1'),
               (T.uint32_t,  'CR2'),
               (T.uint32_t,  'SR'),
-              (T.uint16_t,  'DR'),
+              # This register should be 16 bit. However, when used in 8 bit mode, writing 8 bit value
+              # will cause 2 bytes to be transferred (our byte and NULL byte). This is a dirty workaround, since
+              # this peripheral will most commonly be used only in the 8-bit mode. Eventually better solution will
+              # be implemented.
+              (T.uint8_t,  'DR'),
+              (T.uint8_t,  None),
               (T.uint16_t,  None),
               (T.uint16_t,  'CRCPR'),
               (T.uint16_t,  None),
@@ -508,4 +539,5 @@ class STM32F0(object):
         self.ADC = ADC(self.APB_BUS_BASE + 0x00012400, device_memory)
         self.DAC = DAC(self.APB_BUS_BASE + 0x00007800, device_memory)
         self.USB = USB(self.APB_BUS_BASE + 0x00005C00, device_memory)
-        self.SPI = {2: SPI(self.APB_BUS_BASE + 0x00003800, device_memory)}
+        self.SPI = {2: SPI(self.APB_BUS_BASE + 0x00003800, device_memory),
+                    1: SPI(self.APB_BUS_BASE + 0x00013000, device_memory)}
