@@ -39,7 +39,9 @@ class MMPeripheral(object):
     OFFSET = 1
 
     def __init__(self, address, memory):
-        self.compiled_fields = {}
+        # Our __setattr__ depends on this being set, bypass it.|
+        # Do _not_ set any instance attributes before this line.
+        super().__setattr__('compiled_fields', {})
         self.memory = memory
         self.address = address
         offset = 0
@@ -57,7 +59,7 @@ class MMPeripheral(object):
             raise ValueError('This peripheral does not contain register ' + name)
 
     def __setattr__(self, name, value):
-        if name != 'compiled_fields' and name in self.compiled_fields:
+        if name in self.compiled_fields:
             self.memory.write(self.compiled_fields[name][MMPeripheral.TYPE],
                               self.address + self.compiled_fields[name][MMPeripheral.OFFSET],
                               value)
