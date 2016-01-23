@@ -1,5 +1,6 @@
 import code
 
+
 # TODO this will be rewritten as a part of the new register interface
 def reg(number, flags_dict=None):
     print hex(number)
@@ -26,7 +27,8 @@ def reg(number, flags_dict=None):
         bit_num = len(flags) - i - 1
         if len(flags_to_print) < (i/4)+1:
             flags_to_print.append([])
-        flag_str = '[{bit}] ({flag_name}): {value}'.format(bit=bit_num, flag_name=flag[1], value=flag[0])
+        flag_str = '[{bit}] ({flag_name}): {value}'.format(bit=bit_num, flag_name=flag[1],
+                                                           value=flag[0])
         flags_to_print[i/4].append(flag_str)
         max_length = max(max_length, len(flag_str))
 
@@ -50,5 +52,4 @@ def reg(number, flags_dict=None):
 vars = globals()
 vars.update(locals())
 shell = code.InteractiveConsole(vars)
-print 'Device is available as variable \'dev\'.'
 shell.interact()

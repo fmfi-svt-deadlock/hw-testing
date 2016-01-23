@@ -1,3 +1,9 @@
+"""Contains peripheral definitions and declarations.
+
+See STM32F0x1/STM32F0x2/STM32F0x8 reference manual RM0091.
+http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031936.pdf
+"""
+
 from mempoke import MMPeripheral, T
 
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ -z "$1" ] || [ -z "$2" ] || [ ! -f "devices/$1.py" ]; then
     echo 'Opens interactive Python console inside gdb with slave'
@@ -6,9 +6,9 @@ if [ -z "$1" ] || [ -z "$2" ] || [ ! -f "devices/$1.py" ]; then
     echo 'Usage: ./interactive device_file device_object [gdb_server_port]'
     echo
     echo 'device_file may be:'
-    for device in `ls devices/`; do
-        if [[ ! $device == __* ]] && [[ $device == *.py ]]; then
-            echo -e "\t${device%.*}"
+    for device_file in `ls devices/`; do
+        if [[ ! $device_file == __* ]] && [[ $device_file == *.py ]]; then
+            echo -e "\t${device_file%.*}"
         fi
     done
     echo
@@ -16,11 +16,7 @@ if [ -z "$1" ] || [ -z "$2" ] || [ ! -f "devices/$1.py" ]; then
     exit 1
 fi
 
-GDB_PORT='4242'
-
-if [ ! -z "$3" ]; then
-    GDB_PORT=$3
-fi
+GDB_PORT=${3:-4242}
 
 PYTHON_VERSION=$(python2 --version 2>&1)
 
@@ -48,6 +44,7 @@ $VENV_APPEND"
 PYTHON_SETUP="python
 import mempoke
 from devices.$1 import $2
+print 'Device is available as variable \'dev\'.'
 dev = $2(mempoke.DeviceMemory())"
 
 REMOTE_DEBUG="target extended :$GDB_PORT"

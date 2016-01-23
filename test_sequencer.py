@@ -43,7 +43,7 @@ def run(tests):
             print '------------------------------------'
 
 
-def ask(question):
+def ask_YN(question):
     answer = None
     while True:
         print '\t\t-? {0} [Y/N]'.format(question),
@@ -53,7 +53,7 @@ def ask(question):
     return answer.strip().upper() == 'Y'
 
 
-def request_info(question):
+def ask(question):
     print '\t\t-? {0}:'.format(question),
     return raw_input()
 

@@ -8,7 +8,8 @@ and the device is deployed
 
 import mempoke
 import serial
-from test_sequencer import run, ask, request_info, say
+import time
+from test_sequencer import run, ask_YN, ask, say
 from devices.stm32f0 import STM32F0
 
 
@@ -50,7 +51,7 @@ def test_led1():
 
     turn_on_led('B', 1)
     error = None
-    if not ask('Is LED1 green?'):
+    if not ask_YN('Is LED1 green?'):
         error = 'Green LED1 problem'
     reset_peripherals()
     return error
@@ -62,7 +63,7 @@ def test_led2():
 
     turn_on_led('A', 8)
     error = None
-    if not ask('Is LED2 green?'):
+    if not ask_YN('Is LED2 green?'):
         error = 'Green LED2 problem'
     reset_peripherals()
     return error
@@ -88,7 +89,7 @@ def test_reader():
     # Slave select is plain GPIO pin, as is RST
     moder_flags |= (dev.GPIO['A'].MODE_bits["OUTPUT"] << SS_PIN*2) | (dev.GPIO['A'].MODE_bits["OUTPUT"] << RST_PIN*2)
     dev.GPIO['A'].MODER |= moder_flags
-    # Correct alternate function (0) are already set up
+    # Correct alternate function (AF-0) is already set up for all pins.
 
     # Enable the SPI 1
     dev.RCC.APB2ENR |= (1 << dev.RCC.APB2ENR_bits["SPI1EN"])
@@ -114,7 +115,7 @@ def test_reader():
     # Power-up the reader and *un*select slave
     dev.GPIO['A'].ODR |= (1 << RST_PIN) | (1 << SS_PIN)
 
-    # Transmit 0x82 0x00, which means "Read register 01h". That is a CommanReg of MFRC522. It's reset value is 0x20,
+    # Transmit 0x82 0x00, which means "Read register 01h". That is the CommandReg of MFRC522. Its reset value is 0x20,
     # we will expect that as an answer
     response = []
     dev.GPIO['A'].ODR &= ~(1 << SS_PIN)
@@ -129,14 +130,7 @@ def test_reader():
         return "Error communicating with the MFRC522 module, or the module is not behaving properly!"
 
 
-def usart_transmit():
-    """Tests USART Tx."""
-    # This is undoable in the current board revision. USART 2 Tx shares pin with SWCLK, we would
-    # loose the debug link
-    pass
-
-
-def usart_receive():
+def test_usart_receive():
     """Tests USART Rx.
 
     This test verifies whether Controller is able to send data to the Reader. It assesses functionality of
@@ -146,7 +140,7 @@ def usart_receive():
     """
     reset_peripherals()
 
-    port_name = request_info("Serial port name to use")
+    port_name = ask("Serial port name to use")
     port = serial.Serial(port_name, 9600)
     say("pySerial is using port " + port.name)
 
@@ -162,7 +156,7 @@ def usart_receive():
     # Enable receiver and enable USART 2
     dev.USART[2].CR1 |= (1 << dev.USART[2].CR1_bits["RE"]) | (1 << dev.USART[2].CR1_bits["UE"])
 
-    # Check 'Receiver Enable Acknowledge'
+    # Check that receiver has been enabled
     if not dev.USART[2].ISR & (1 << dev.USART[2].ISR_bits["REACK"]):
         reset_peripherals()
         return "Error enabling USART 2 receiver!"
@@ -198,10 +192,9 @@ def usart_receive():
         port.write(letter)
         port.flush()
 
-        # Wait for reception
-        for i in range(0, 10):
-            if dev.USART[2].ISR & (1 << dev.USART[2].ISR_bits["RXNE"]):
-                break
+        # Wait for reception. At 9600 baud transmission should take ~0.8ms. We will wait 10ms
+        # to be on the safe side.
+        time.sleep(0.01)
 
         # Check reception
         if dev.USART[2].ISR & (1 << dev.USART[2].ISR_bits["RXNE"]):
@@ -217,5 +210,5 @@ def usart_receive():
     # All done
     reset_peripherals()
 
-tests = [test_led1, test_led2, test_reader, usart_receive]
+tests = [test_led1, test_led2, test_reader, test_usart_receive]
 run(tests)
