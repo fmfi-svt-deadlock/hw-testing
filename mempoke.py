@@ -38,9 +38,10 @@ class MMPeripheral(object):
     TYPE = 0
     OFFSET = 1
 
-    compiled_fields = {}
-
     def __init__(self, address, memory):
+        # Our __setattr__ depends on this being set, bypass it.|
+        # Do _not_ set any instance attributes before this line.
+        super().__setattr__('compiled_fields', {})
         self.memory = memory
         self.address = address
         offset = 0

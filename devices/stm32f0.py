@@ -1,3 +1,9 @@
+"""Contains peripheral definitions and declarations.
+
+See STM32F0x1/STM32F0x2/STM32F0x8 reference manual RM0091.
+http://www.st.com/web/en/resource/technical/document/reference_manual/DM00031936.pdf
+"""
+
 from mempoke import MMPeripheral, T
 
 
@@ -29,6 +35,80 @@ class RCC(MMPeripheral):
                    'SRAMEN': 2,
                    'DMAEN': 0}
 
+    AHBRSTR_bits = {'TSCRST': 24,
+                    'IOPFRST': 22,
+                    'IOPERST': 21,
+                    'IOPDRST': 20,
+                    'IOPCRST': 19,
+                    'IOPBRST': 18,
+                    'IOPARST': 17}
+
+    APB1ENR_bits = {'CECEN': 30,
+                    'DACEN': 29,
+                    'PWREN': 28,
+                    'CRSEN': 27,
+                    'CANEN': 25,
+                    'USBEN': 23,
+                    'I2C2EN': 22,
+                    'I2C1EN': 21,
+                    'USART5EN': 20,
+                    'USART4EN': 19,
+                    'USART3EN': 18,
+                    'USART2EN': 17,
+                    'SPI2EN': 14,
+                    'WWDGEN': 11,
+                    'TIM14EN': 8,
+                    'TIM7EN': 5,
+                    'TIM6EN': 4,
+                    'TIM3EN': 1,
+                    'TIM2EN': 0}
+
+    APB1RSTR_bits = {'CECRST': 30,
+                     'DACRST': 29,
+                     'PWRRST': 28,
+                     'CRSRST': 27,
+                     'CANRST': 25,
+                     'USBRST': 23,
+                     'I2C2RST': 22,
+                     'I2C1RST': 21,
+                     'USART5RST': 20,
+                     'USART4RST': 19,
+                     'USART3RST': 18,
+                     'USART2RST': 17,
+                     'SPI2RST': 14,
+                     'WWDGRST': 11,
+                     'TIM14RST': 8,
+                     'TIM7RST': 5,
+                     'TIM6RST': 4,
+                     'TIM3RST': 1,
+                     'TIM2RST': 0}
+
+    APB2ENR_bits = {'DBGMCUEN': 22,
+                    'TIM17EN': 18,
+                    'TIM16EN': 17,
+                    'TIM15EN': 16,
+                    'USART1EN': 14,
+                    'SPI1EN': 12,
+                    'TIM1EN': 11,
+                    'ADCEN': 9,
+                    'USART8EN': 7,
+                    'USART7EN': 6,
+                    'USART6EN': 5,
+                    'SYSCFGCOMPEN': 0}
+    
+    APB2RSTR_bits = {'DBGMCURST': 22,
+                     'TIM17RST': 18,
+                     'TIM16RST': 17,
+                     'TIM15RST': 16,
+                     'USART1RST': 14,
+                     'SPI1RST': 12,
+                     'TIM1RST': 11,
+                     'ADCRST': 9,
+                     'USART8RST': 7,
+                     'USART7RST': 6,
+                     'USART6RST': 5,
+                     'SYSCFGRST': 0}
+
 
 class GPIO(MMPeripheral):
     fields = [(T.uint32_t,  'MODER'),
@@ -42,8 +122,8 @@ class GPIO(MMPeripheral):
               (T.uint16_t,  None),
               (T.uint32_t,  'BSRR'),
               (T.uint32_t,  'LCKR'),
-              (T.uint32_t,  'AFR0'),
-              (T.uint32_t,  'AFR1'),
+              (T.uint32_t,  'AFRL'),
+              (T.uint32_t,  'AFRH'),
               (T.uint16_t,  'BRR'),
               (T.uint16_t,  None)]
 
@@ -285,7 +365,12 @@ class SPI(MMPeripheral):
     fields = [(T.uint32_t,  'CR1'),
               (T.uint32_t,  'CR2'),
               (T.uint32_t,  'SR'),
-              (T.uint16_t,  'DR'),
+              # This register should be 16 bit. However, when used in 8 bit mode, writing 8 bit value
+              # will cause 2 bytes to be transferred (our byte and NULL byte). This is a dirty workaround, since
+              # this peripheral will most commonly be used only in the 8-bit mode. Eventually better solution will
+              # be implemented.
+              (T.uint8_t,  'DR'),
+              (T.uint8_t,  None),
               (T.uint16_t,  None),
               (T.uint16_t,  'CRCPR'),
               (T.uint16_t,  None),
@@ -456,8 +541,9 @@ class STM32F0(object):
                       5: USART(self.APB_BUS_BASE + 0x00005000, device_memory),
                       4: USART(self.APB_BUS_BASE + 0x00004C00, device_memory),
                       3: USART(self.APB_BUS_BASE + 0x00004800, device_memory),
-                      2: USART(self.APB_BUS_BASE + 0x00004000, device_memory)}
+                      2: USART(self.APB_BUS_BASE + 0x00004400, device_memory)}
         self.ADC = ADC(self.APB_BUS_BASE + 0x00012400, device_memory)
         self.DAC = DAC(self.APB_BUS_BASE + 0x00007800, device_memory)
         self.USB = USB(self.APB_BUS_BASE + 0x00005C00, device_memory)
-        self.SPI = {2: SPI(self.APB_BUS_BASE + 0x00003800, device_memory)}
+        self.SPI = {2: SPI(self.APB_BUS_BASE + 0x00003800, device_memory),
+                    1: SPI(self.APB_BUS_BASE + 0x00013000, device_memory)}

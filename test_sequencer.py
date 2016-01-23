@@ -22,8 +22,8 @@ def run(tests):
     ok = []
     fail = []
     for number, test in enumerate(tests):
-        print '\t-> [{num}/{total}] {name} ({doc})'.format(num=number, total=len(tests),
-                                                           name=test.__name__, doc=test.__doc__)
+        print '\t-> [{num}/{total}] {name} ({doc})'.format(num=number+1, total=len(tests),
+                                                           name=test.__name__, doc=test.__doc__.splitlines()[0])
         error = test()
         if error is None:
             ok.append((number, test))
@@ -36,13 +36,14 @@ def run(tests):
     print '\tFAILED: {}'.format(len(fail))
     if len(fail) > 0:
         print ''
-        print '--- Failures ---'
+        print '------------- FAILURES -------------'
         for number, test, error in fail:
-            print 'Test {number} - {name} ({doc})\n{err}'.format(number=number, name=test.__name__,
+            print '\nTest {number} - {name}\n{doc}\n{err}'.format(number=number+1, name=test.__name__,
                                                                  doc=test.__doc__, err=error)
+            print '------------------------------------'
 
 
-def ask(question):
+def ask_YN(question):
     answer = None
     while True:
         print '\t\t-? {0} [Y/N]'.format(question),
@@ -50,3 +51,12 @@ def ask(question):
         if answer.strip().upper() in ['Y', 'N']:
             break
     return answer.strip().upper() == 'Y'
+
+
+def ask(question):
+    print '\t\t-? {0}:'.format(question),
+    return raw_input()
+
+
+def say(something):
+    print '\t\t- {0}'.format(something)
