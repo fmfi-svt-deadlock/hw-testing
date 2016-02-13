@@ -8,6 +8,8 @@ and the device is deployed
 
 import mempoke
 import serial
+from mfrc522.mfrc522 import MFRC522, NoTagError, TransmissionError
+from mfrc522.iso14443com import *
 import time
 from test_sequencer import run, ask_YN, ask, say
 from devices.stm32f0 import STM32F0
@@ -210,5 +212,90 @@ def test_usart_receive():
     # All done
     reset_peripherals()
 
-tests = [test_led1, test_led2, test_reader, test_usart_receive]
+
+def test_mfrc522_card_read():
+    """Tests whether MFRC522 can read a card.
+
+    Although this is testing hardware we are not manufacturing nor should be debugging, it may
+    be useful to know whether the most important module of the whole board is working properly.
+    """
+
+    # TODO code duplicity!
+    reset_peripherals()
+
+    RST_PIN = 3
+    SS_PIN = 1
+
+    # Enable port A GPIO for SPI usage
+    dev.RCC.AHBENR |= (1 << dev.RCC.AHBENR_bits["IOPAEN"])
+    # Set pins used by SPI1 to 'Alternate' mode
+    moder_flags = 0
+    for pin in [5, 6, 7]:
+        moder_flags |= (dev.GPIO['A'].MODE_bits["ALT"] << pin*2)
+    # Slave select is plain GPIO pin, as is RST
+    moder_flags |= (dev.GPIO['A'].MODE_bits["OUTPUT"] << SS_PIN*2) | (dev.GPIO['A'].MODE_bits["OUTPUT"] << RST_PIN*2)
+    dev.GPIO['A'].MODER |= moder_flags
+    # Correct alternate function (AF-0) is already set up for all pins.
+
+    # Enable the SPI 1
+    dev.RCC.APB2ENR |= (1 << dev.RCC.APB2ENR_bits["SPI1EN"])
+
+    # Use software slave management
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SSM"])
+    # Slowest comm speed (safest option) (0b111 to BR[2:0])
+    dev.SPI[1].CR1 |= (0b111 << 3)
+    # We are the master
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["MSTR"])
+    # Clock phase and clock polarity is left default. Byte is sent MSB-first (also default)
+
+    # 8-bit transfer data size
+    dev.SPI[1].CR2 |= (0b0111 << 8)
+    # Enable control of Slave Select pin
+    dev.SPI[1].CR2 |= (1 << dev.SPI[1].CR2_bits["SSOE"])
+    # Generate RX-Not-empty event when 8 bits were received
+    dev.SPI[1].CR2 |= (1 << dev.SPI[1].CR2_bits["FRXTH"])
+
+    # Enable the SPI
+    dev.SPI[1].CR1 |= (1 << dev.SPI[1].CR1_bits["SPE"])
+
+    # Power-up the reader and *un*select slave
+    dev.GPIO['A'].ODR |= (1 << RST_PIN) | (1 << SS_PIN)
+
+    class SPIWrapper:
+        def transfer(self, data):
+            # Select slave
+            dev.GPIO['A'].ODR &= ~(1 << SS_PIN)
+            result = []
+            for byte in data:
+                dev.SPI[1].DR = byte
+                result.append(dev.SPI[1].DR)
+            dev.GPIO['A'].ODR |= (1 << SS_PIN)
+            say("[" + ' '.join(hex(byte) for byte in data) + "]: [" + ' '.join(hex(byte) for byte in result) + "]")
+            return result
+
+        def hard_powerdown(self):
+            dev.GPIO['A'].ODR &= ~(1 << RST_PIN)
+
+        def reset(self):
+            dev.GPIO['A'].ODR &= ~(1 << RST_PIN)
+            dev.GPIO['A'].ODR |= (1 << RST_PIN)
+
+    module = MFRC522(SPIWrapper())
+
+    ask("Put known working card on the reader (press return when ready)")
+
+    if are_cards_in_field(module):
+        try:
+            uid = get_id(module)
+            number = int.from_bytes(uid, byteorder='little')
+            say("Card detected: " + ''.join('{:02x}'.format(x) for x in uid) + " " + str(number))
+        except NoTagError:
+            return "Card detected, but disappeared when trying to read it"
+        except TransmissionError:
+            return "Error reading card"
+    else:
+        return "No card was detected"
+
+
+tests = [test_reader, test_mfrc522_card_read]
 run(tests)
