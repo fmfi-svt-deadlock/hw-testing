@@ -1,3 +1,7 @@
+# PROJECT MOVED
+
+This repository is now hosted here: https://gitlab.com/project-deadlock/hw-testing
+
 # Hardware Testing Library
 
 A helper library for creating HW tests for embedded devices. This repository
